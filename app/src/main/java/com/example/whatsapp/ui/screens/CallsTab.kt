@@ -26,7 +26,8 @@ import java.util.*
 @Composable
 fun CallsTab(
     onNavigateToIncomingCall: (String) -> Unit,
-    onNavigateToOutgoingCall: (String) -> Unit
+    onNavigateToOutgoingCall: (String) -> Unit,
+    onSimulateIncomingCall: (() -> Unit)? = null
 ) {
     // Mock call history data
     val sampleCalls = listOf(
@@ -63,6 +64,43 @@ fun CallsTab(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
+        // Add test button for simulating incoming calls
+        onSimulateIncomingCall?.let { simulateCall ->
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .clickable { simulateCall() },
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF075E54).copy(alpha = 0.1f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.Phone,
+                            contentDescription = "Simulate Incoming Call",
+                            tint = Color(0xFF075E54),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Simulate Incoming Call",
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF075E54)
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        
         items(sampleCalls) { call ->
             CallItem(
                 call = call,

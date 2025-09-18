@@ -25,6 +25,7 @@ class CallService : Service() {
         const val ACTION_END_CALL = "END_CALL"
         const val ACTION_ANSWER_CALL = "ANSWER_CALL"
         const val ACTION_DECLINE_CALL = "DECLINE_CALL"
+        const val ACTION_INCOMING_CALL = "INCOMING_CALL"
         
         const val EXTRA_CALL_DATA = "call_data"
     }
@@ -55,6 +56,11 @@ class CallService : Service() {
             }
             ACTION_DECLINE_CALL -> {
                 declineCall()
+            }
+            ACTION_INCOMING_CALL -> {
+                val call = intent.getSerializableExtra(EXTRA_CALL_DATA) as? Call
+                val callerName = intent.getStringExtra("callerName") ?: "Unknown Caller"
+                call?.let { handleIncomingCall(it, callerName) }
             }
         }
         
@@ -244,6 +250,23 @@ class CallService : Service() {
         endCall()
     }
     
+    private fun handleIncomingCall(call: Call, callerName: String) {
+        // Show incoming call notification
+        val notification = createIncomingCallNotification(callerName, call.id)
+        startForeground(NOTIFICATION_ID, notification)
+        
+        // Navigate to incoming call screen via Intent
+        val activityIntent = Intent(this, com.example.whatsapp.MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("navigate_to", "incoming_call")
+            putExtra("call_id", call.id)
+            putExtra("caller_name", callerName)
+            putExtra("call_type", call.type.name)
+        }
+        
+        startActivity(activityIntent)
+    }
+    
     private fun createCallNotification(title: String, content: String): Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
@@ -257,6 +280,51 @@ class CallService : Service() {
             .setSmallIcon(android.R.drawable.ic_menu_call)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .build()
+    }
+    
+    private fun createIncomingCallNotification(callerName: String, callId: String): Notification {
+        val answerIntent = Intent(this, CallService::class.java).apply {
+            action = ACTION_ANSWER_CALL
+            putExtra("callId", callId)
+        }
+        
+        val declineIntent = Intent(this, CallService::class.java).apply {
+            action = ACTION_DECLINE_CALL
+            putExtra("callId", callId)
+        }
+        
+        val answerPendingIntent = PendingIntent.getService(
+            this, 1, answerIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        val declinePendingIntent = PendingIntent.getService(
+            this, 2, declineIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_call)
+            .setContentTitle("Incoming call")
+            .setContentText(callerName)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_CALL)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setFullScreenIntent(
+                PendingIntent.getActivity(
+                    this, 0,
+                    Intent(this, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        putExtra("navigate_to", "incoming_call")
+                        putExtra("call_id", callId)
+                        putExtra("caller_name", callerName)
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                ), true
+            )
+            .addAction(android.R.drawable.ic_menu_call, "Answer", answerPendingIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Decline", declinePendingIntent)
             .build()
     }
 }

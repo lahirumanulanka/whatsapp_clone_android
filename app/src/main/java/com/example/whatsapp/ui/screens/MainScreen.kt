@@ -8,6 +8,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import com.example.whatsapp.data.models.CallType
+import com.example.whatsapp.utils.CallManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -17,6 +20,8 @@ fun MainScreen(
     onNavigateToOutgoingCall: (String) -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    val callManager = remember { CallManager(context) }
     
     Scaffold(
         topBar = {
@@ -75,7 +80,15 @@ fun MainScreen(
                 1 -> StatusTab()
                 2 -> CallsTab(
                     onNavigateToIncomingCall = onNavigateToIncomingCall,
-                    onNavigateToOutgoingCall = onNavigateToOutgoingCall
+                    onNavigateToOutgoingCall = onNavigateToOutgoingCall,
+                    onSimulateIncomingCall = {
+                        val callId = callManager.simulateIncomingCall(
+                            callerContactId = "demo_caller",
+                            callerName = "Demo Caller",
+                            callType = CallType.VOICE
+                        )
+                        onNavigateToIncomingCall(callId)
+                    }
                 )
             }
         }
