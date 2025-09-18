@@ -14,21 +14,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.whatsapp.call.CallManager
 import com.example.whatsapp.data.model.Call
 import com.example.whatsapp.data.model.CallStatus
+import com.example.whatsapp.ui.screens.main.tabs.CallsTabViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun CallsTab() {
+fun CallsTab(
+    viewModel: CallsTabViewModel = hiltViewModel()
+) {
     // Sample call data
     val sampleCalls = listOf(
         Call(
             id = "1",
-            participantId = "user2",
+            participantId = "+1234567890",
             isIncoming = false,
             isVideoCall = false,
             startTime = System.currentTimeMillis() - 3600000,
@@ -38,7 +44,7 @@ fun CallsTab() {
         ),
         Call(
             id = "2",
-            participantId = "user3",
+            participantId = "+0987654321",
             isIncoming = true,
             isVideoCall = true,
             startTime = System.currentTimeMillis() - 7200000,
@@ -46,7 +52,7 @@ fun CallsTab() {
         ),
         Call(
             id = "3",
-            participantId = "user4",
+            participantId = "+1122334455",
             isIncoming = false,
             isVideoCall = false,
             startTime = System.currentTimeMillis() - 86400000,
@@ -60,13 +66,21 @@ fun CallsTab() {
         modifier = Modifier.fillMaxSize()
     ) {
         items(sampleCalls) { call ->
-            CallItem(call = call)
+            CallItem(
+                call = call,
+                onCallClick = { isVideoCall ->
+                    viewModel.callManager.makeCall(call.participantId, isVideoCall)
+                }
+            )
         }
     }
 }
 
 @Composable
-private fun CallItem(call: Call) {
+private fun CallItem(
+    call: Call,
+    onCallClick: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -134,15 +148,27 @@ private fun CallItem(call: Call) {
             }
         }
         
-        // Call type icon (audio/video)
-        IconButton(
-            onClick = { /* Handle call back */ }
-        ) {
-            Icon(
-                imageVector = if (call.isVideoCall) Icons.Default.Videocam else Icons.Default.Call,
-                contentDescription = if (call.isVideoCall) "Video call" else "Voice call",
-                tint = Color(0xFF075E54)
-            )
+        // Call type icons
+        Row {
+            IconButton(
+                onClick = { onCallClick(false) }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Call,
+                    contentDescription = "Voice call",
+                    tint = Color(0xFF075E54)
+                )
+            }
+            
+            IconButton(
+                onClick = { onCallClick(true) }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Videocam,
+                    contentDescription = "Video call",
+                    tint = Color(0xFF075E54)
+                )
+            }
         }
     }
 }

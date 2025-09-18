@@ -14,9 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.whatsapp.call.CallManager
 import com.example.whatsapp.data.model.Message
 import com.example.whatsapp.data.model.MessageType
 import com.example.whatsapp.data.model.MessageStatus
@@ -27,7 +30,8 @@ import java.util.*
 @Composable
 fun ChatScreen(
     chatId: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: ChatViewModel = hiltViewModel()
 ) {
     var messageText by remember { mutableStateOf("") }
     
@@ -91,14 +95,20 @@ fun ChatScreen(
                 }
             },
             actions = {
-                IconButton(onClick = { /* Video call */ }) {
+                IconButton(onClick = { 
+                    // Make video call
+                    viewModel.makeCall("+123456789$chatId", true)
+                }) {
                     Icon(
                         Icons.Default.Videocam,
                         contentDescription = "Video call",
                         tint = Color.White
                     )
                 }
-                IconButton(onClick = { /* Voice call */ }) {
+                IconButton(onClick = { 
+                    // Make voice call
+                    viewModel.makeCall("+123456789$chatId", false)
+                }) {
                     Icon(
                         Icons.Default.Call,
                         contentDescription = "Voice call",
